@@ -6,6 +6,7 @@ import java.util.List;
 import model.entites.Entite;
 import model.entites.Intrus;
 import model.entites.Robot;
+import model.entites.SacArgent;
 import model.terrain.Grille;
 import utils.Direction;
 import utils.Position;
@@ -24,17 +25,19 @@ public class GestionnaireJeu {
     private int tourActuel;        // 1 ou 2
     private int nombreToursJoues;
 
-    private int intrusCaptures;
     private int intrusEchappes;
 
     private Robot robotSelectionne;
     private Intrus intrusSelectionne;
+    private int intrusCaptures = 0;
+
+
 
     // --------------------
     // Constructeur & initialisation
     // --------------------
     public GestionnaireJeu(int nbLignes, int nbColonnes) {
-        this.grille = new Grille(nbLignes, nbColonnes);
+        this.grille = new Grille(nbLignes, nbColonnes, this);
         this.etatActuel = EtatJeu.CONFIGURATION;
         this.tourActuel = 1;
         this.nombreToursJoues = 0;
@@ -107,6 +110,10 @@ public class GestionnaireJeu {
         if (deplace) {
             // Vérifier les captures après déplacement
             verifierCaptures(entite);
+            verifierFuiteIntrus(entite);
+            if (entite instanceof Intrus) {
+                ramasserSac((Intrus) entite);
+         }
             
             incrementerTour();
             if (grille.partieTerminee()) terminerPartie();
@@ -169,6 +176,32 @@ public class GestionnaireJeu {
     /**
      * Capture un intrus.
      */
+    private void verifierFuiteIntrus(Entite entiteDeplacee) {
+    if (!(entiteDeplacee instanceof Intrus)) return;
+    Intrus intrus = (Intrus) entiteDeplacee;
+    Position pos = intrus.getPosition();
+    
+    if (grille.getCase(pos).estSortie()) {
+        intrus.sEchapper();       // Retirer de la grille
+        grille.retirerIntrus(intrus);
+
+        incrementerIntrusEchappes();       // Compteur d’intrus échappés
+    }
+}
+
+    private void ramasserSac(Intrus intrus) {
+        List<SacArgent> sacs = grille.getSacs(); // Récupérer tous les sacs sur la grille
+
+        for (SacArgent sac : sacs) {
+            // Vérifie si le sac est adjacent à l'intrus et non ramassé
+            if (!sac.estRamasse && intrus.sacEstAdjacent(sac.getPosition())) {
+                sac.estRamasse = true;             // Marquer le sac comme ramassé
+                sac.setPorteur(intrus);            // Lier le sac à l'intrus
+                intrus.getSacsPortes().add(sac);   // Ajouter le sac à la liste des sacs de l'intrus
+            }
+        }
+    }
+
     private void capturerIntrus(Intrus intrus, Robot robot) {
         grille.retirerIntrus(intrus);
         incrementerIntrusCaptures();

@@ -102,7 +102,7 @@ public class ControleurJeu {
 
     public void configurerGrille(int nbLignes, int nbColonnes) {
         // Recrée la grille avec les nouvelles dimensions
-        Grille nouvelleGrille = new Grille(nbLignes, nbColonnes);
+        Grille nouvelleGrille = new Grille(nbLignes, nbColonnes,this.gestionnaire);
         gestionnaire.setGrille(nouvelleGrille); // Vérifier que setGrille existe
     }
 

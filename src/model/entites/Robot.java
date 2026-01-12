@@ -1,7 +1,6 @@
 package model.entites;
 
 import model.terrain.Grille;
-import model.entites.Intrus;
 import utils.Position;
 
 /**
@@ -46,7 +45,7 @@ public class Robot extends Entite {
     // --------------------
     // Logique capture
     // --------------------
-    private void attraperIntrus(Intrus intrus, Grille grille) {
+    public void attraperIntrus(Intrus intrus, Grille grille) {
         if (intrus != null && intrus.estVivant()) {
             intrus.setVivant(false);          // l'intrus est capturé
             intrus.relacherSacs();            // ses sacs retournent sur la grille

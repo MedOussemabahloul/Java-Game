@@ -11,7 +11,7 @@ public class SacArgent extends Entite {
     // Attributs
     // --------------------
     private final int id;
-    private boolean estRamasse;
+    public boolean estRamasse;
     private Intrus porteur; // null si aucun intrus ne le porte
     private final Position positionInitiale;
 
@@ -40,6 +40,9 @@ public class SacArgent extends Entite {
     public Intrus getPorteur() {
         return porteur;
     }
+    public void setPorteur(Intrus intrus) {
+        this.porteur = intrus;
+    }
 
     // --------------------
     // Méthodes principales
@@ -47,13 +50,7 @@ public class SacArgent extends Entite {
     /**
      * Ramasser le sac par un intrus
      */
-    public void etreRamasse(Intrus intrus) {
-        if (!estRamasse) {
-            estRamasse = true;
-            porteur = intrus;
-            position = null; // plus sur la grille
-        }
-    }
+
 
     /**
      * Relâcher le sac (par exemple si intrus capturé)
@@ -67,11 +64,24 @@ public class SacArgent extends Entite {
     /**
      * Retourne le sac à sa position initiale
      */
+
     public void retournerPositionInitiale() {
-        position = positionInitiale;
-        estRamasse = false;
-        porteur = null;
+        this.position = positionInitiale;
+        this.estRamasse = false;
+        this.porteur = null;
+        
+        System.out.println("   💰 Sac retourne à sa position initiale : " + positionInitiale);
     }
+
+/**
+ * Le sac est ramassé par un intrus.
+ */
+    public void etreRamasse(Intrus intrus) {
+        this.estRamasse = true;
+        this.porteur = intrus;
+    }
+
+
 
     // --------------------
     // Méthode abstraite

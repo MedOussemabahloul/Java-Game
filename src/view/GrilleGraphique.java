@@ -222,34 +222,84 @@ public class GrilleGraphique extends GridPane {
      * Crée le node pour un robot.
      */
     private Node creerNodeRobot(Robot robot) {
-        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(GenerateurImages.genererImageRobot());
+        StackPane stack = new StackPane();
+        
+        // Image du robot
+        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(
+            GenerateurImages.genererImageRobot()
+        );
         imageView.setFitWidth(tailleCellule * 0.8);
         imageView.setFitHeight(tailleCellule * 0.8);
         imageView.setPreserveRatio(true);
-        return imageView;
+        
+        stack.getChildren().add(imageView);
+        
+        // Ajouter le numéro du robot en overlay
+        Text numero = new Text("R" + robot.getId());
+        numero.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        numero.setFill(Color.WHITE);
+        numero.setStroke(Color.BLACK);
+        numero.setStrokeWidth(1.5);
+        
+        // Positionner en bas à droite
+        StackPane.setAlignment(numero, javafx.geometry.Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(numero, new javafx.geometry.Insets(0, 3, 3, 0));
+        stack.getChildren().add(numero);
+        
+        return stack;
     }
 
-    /**
-     * Crée le node pour un intrus.
-     */
+        /**
+         * Crée le node pour un intrus.
+         */
     private Node creerNodeIntrus(Intrus intrus) {
-        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(GenerateurImages.genererImageIntrus());
+        StackPane stack = new StackPane();
+        
+        // Image de l'intrus
+        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(
+            GenerateurImages.genererImageIntrus()
+        );
         imageView.setFitWidth(tailleCellule * 0.8);
         imageView.setFitHeight(tailleCellule * 0.8);
         imageView.setPreserveRatio(true);
-        return imageView;
+        
+        stack.getChildren().add(imageView);
+        
+        // Texte avec numéro + indicateur de sacs
+        String texte = "I" + intrus.getId();
+        
+        // Si l'intrus porte des sacs, l'indiquer
+        if (!intrus.getSacsPortes().isEmpty()) {
+            texte += "\n💰×" + intrus.getSacsPortes().size();
+        }
+        
+        Text info = new Text(texte);
+        info.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        info.setFill(Color.WHITE);
+        info.setStroke(Color.BLACK);
+        info.setStrokeWidth(1.5);
+        info.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        
+        // Positionner en bas à droite
+        StackPane.setAlignment(info, javafx.geometry.Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(info, new javafx.geometry.Insets(0, 3, 3, 0));
+        stack.getChildren().add(info);
+        
+        return stack;
     }
 
     /**
      * Crée le node pour un sac.
      */
     private Node creerNodeSac(SacArgent sac) {
-        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(GenerateurImages.genererImageSac());
+        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(
+            GenerateurImages.genererImageSac()
+        );
         imageView.setFitWidth(tailleCellule * 0.75);
         imageView.setFitHeight(tailleCellule * 0.75);
         imageView.setPreserveRatio(true);
         return imageView;
-    }
+}
 
     /**
      * Rafraîchit l'affichage complet de la grille.

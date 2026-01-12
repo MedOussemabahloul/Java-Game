@@ -1,11 +1,11 @@
 package model.entites;
 
-import model.terrain.Grille;
-import model.entites.SacArgent;
-import utils.Position;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import model.terrain.Case;
+import model.terrain.Grille;
+import utils.Position;
 
 /**
  * Classe représentant un intrus voleur
@@ -16,7 +16,7 @@ public class Intrus extends Entite {
     private final int CAPACITE_MAX = 2;
 
     private final List<SacArgent> sacsPortes;
-    private boolean aFui;
+    public  boolean aFui;
 
     public Intrus(int id, Position positionInitiale) {
         super(positionInitiale);
@@ -41,23 +41,38 @@ public class Intrus extends Entite {
      * - ramasser un sac si possible
      * - sinon s'échapper si sur une sortie
      */
+
     @Override
-    public void executerAction(Grille grille) {
-        // 1. Ramasser un sac adjacent si possible
-        if (peutRamasserSac()) {
-            List<SacArgent> sacsAdj = grille.getSacsAdjacents(getPosition());
-            if (!sacsAdj.isEmpty()) {
-                ramasserSac(sacsAdj.get(0)); // prend le premier disponible
-                return;
+public void executerAction(Grille grille) {
+    // 1. Vérifier si sur une sortie (priorité : fuir)
+    if (grille.getCase(position).estSortie()) {
+        System.out.println("🚪 Intrus #" + id + " s'échappe par la sortie !");
+        aFui = true;
+        setVivant(false);
+        grille.retirerIntrus(this);
+        return;
+    }
+    
+    // 2. Si peut ramasser un sac, le faire
+    if (peutRamasserSac()) {
+        List<SacArgent> sacsAdjacents = grille.getSacsAdjacents(position);
+        
+        if (!sacsAdjacents.isEmpty()) {
+            SacArgent sac = sacsAdjacents.get(0);
+            
+            System.out.println("💰 Intrus #" + id + " ramasse un sac !");
+            
+            // Ramasser le sac
+            ramasserSac(sac);
+            
+            // IMPORTANT : Retirer le sac de sa case
+            Case caseSac = grille.getCase(sac.getPosition());
+            if (caseSac != null && caseSac.getEntite() == sac) {
+                caseSac.setEntite(null);
             }
         }
-
-        // 2. Vérifier si sur une sortie
-        if (estSurSortie(grille)) {
-            sEchapper();
-        }
     }
-
+}
     // --------------------
     // Gestion des sacs
     // --------------------
@@ -97,4 +112,7 @@ public class Intrus extends Entite {
     public boolean sacEstAdjacent(Position positionSac) {
         return getPosition().estAdjacente(positionSac);
     }
+
+
+ 
 }

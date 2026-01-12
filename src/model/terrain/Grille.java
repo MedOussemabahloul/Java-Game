@@ -7,6 +7,7 @@ import model.entites.Entite;
 import model.entites.Intrus;
 import model.entites.Robot;
 import model.entites.SacArgent;
+import model.jeu.GestionnaireJeu;
 import observer.ObservateurGrille;
 import observer.Sujet;
 import utils.Position;
@@ -15,6 +16,7 @@ import utils.Position;
  * Classe centrale représentant la grille de jeu
  * Implémente le pattern Observer pour notifier la vue
  */
+
 public class Grille implements Sujet {
 
     // --------------------
@@ -35,11 +37,13 @@ public class Grille implements Sujet {
     // --------------------
     // Constructeur
     // --------------------
-    public Grille(int nbLignes, int nbColonnes) {
+    private final GestionnaireJeu gestionnaire;
+
+    public Grille(int nbLignes, int nbColonnes, GestionnaireJeu gestionnaire) {
         this.nbLignes = nbLignes;
         this.nbColonnes = nbColonnes;
         this.cases = new Case[nbLignes][nbColonnes];
-
+        this.gestionnaire = gestionnaire;
         this.robots = new ArrayList<>();
         this.intrus = new ArrayList<>();
         this.sacs = new ArrayList<>();
@@ -91,13 +95,22 @@ public class Grille implements Sujet {
     }
 
     public void ajouterSac(SacArgent sac) {
-        Position pos = sac.getPosition();
-        if (positionValide(pos) && caseEstLibre(pos)) {
+    Position pos = sac.getPosition();
+    if (positionValide(pos)) {
+        // Vérifier que la case n'a pas d'entité mobile (robot/intrus)
+        Case casePos = getCase(pos);
+        if (casePos.getEntite() == null) {
+            // Ajouter le sac à la liste
             sacs.add(sac);
+            
+            // IMPORTANT : Placer le sac sur la case pour l'affichage
+            casePos.setEntite(sac);
+            
+            System.out.println("💰 Sac ajouté à la position " + pos);
             notifierObservateurs();
         }
     }
-
+}
     // --------------------
     // Méthodes de validation
     // --------------------
@@ -163,23 +176,75 @@ public class Grille implements Sujet {
     // --------------------
     // Déplacement d'entité
     // --------------------
-    public boolean deplacerEntite(Entite entite, Position nouvellePos) {
-        if (!positionValide(nouvellePos) || !caseEstLibre(nouvellePos)) return false;
-
-        // Retirer de l'ancienne case
-        Position anciennePos = entite.getPosition();
-        Case ancienneCase = getCase(anciennePos);
-        if (ancienneCase != null) ancienneCase.setEntite(null);
-
-        // Placer dans la nouvelle case
-        entite.setPosition(nouvellePos);
-        Case nouvelleCase = getCase(nouvellePos);
-        if (nouvelleCase != null) nouvelleCase.setEntite(entite);
-
-        // Notifier tous les observateurs après un déplacement
-        notifierObservateurs();
-        return true;
+public boolean deplacerEntite(Entite entite, Position nouvellePos) {
+    if (!positionValide(nouvellePos) || !caseEstLibre(nouvellePos)) {
+        return false;
     }
+
+    // Retirer de l'ancienne case
+    Position anciennePos = entite.getPosition();
+    Case ancienneCase = getCase(anciennePos);
+    if (ancienneCase != null) {
+        ancienneCase.setEntite(null);
+    }
+
+    // Placer dans la nouvelle case
+    entite.setPosition(nouvellePos);
+    Case nouvelleCase = getCase(nouvellePos);
+    if (nouvelleCase != null) {
+        nouvelleCase.setEntite(entite);
+    }
+    Entite e = getCase(nouvellePos).getEntite();
+    if (entite instanceof Intrus && e instanceof SacArgent) {
+        SacArgent sac = (SacArgent) e;
+        if (!sac.estRamasse()) {
+            ((Intrus) entite).ramasserSac(sac);
+            sac.estRamasse=true;
+            // Retirer de la grille visuellement
+            getCase(nouvellePos).setEntite(entite); // intrus reste
+            notifierObservateurs();
+            System.out.println("💰 Sac ramassé par Intrus #" + ((Intrus) entite).getId());
+        }
+    }
+
+    // ==================== CAPTURE AUTOMATIQUE ====================
+    // Si c'est un robot qui se déplace, vérifier les intrus adjacents
+    if (entite instanceof Robot) {
+        Robot robot = (Robot) entite;
+        
+        // Chercher tous les intrus adjacents à la nouvelle position
+        List<Intrus> intrusAdjacents = getIntrusAdjacents(nouvellePos);
+        
+        // S'il y a au moins un intrus adjacent
+        if (!intrusAdjacents.isEmpty()) {
+            // Capturer le premier intrus trouvé
+            Intrus intrusCapture = intrusAdjacents.get(0);
+            
+            System.out.println("═══════════════════════════════════════");
+            System.out.println("🎯 CAPTURE AUTOMATIQUE !");
+            System.out.println("   Robot #" + robot.getId() + 
+                             " a capturé Intrus #" + intrusCapture.getId());
+            System.out.println("═══════════════════════════════════════");
+            
+            // Le robot attrape l'intrus
+            robot.attraperIntrus(intrusCapture,Grille.this);
+            
+            // L'intrus est capturé : il meurt et relâche ses sacs
+            intrusCapture.setVivant(false);
+            intrusCapture.relacherSacs();
+            
+            // Retirer l'intrus de la grille
+            gestionnaire.incrementerIntrusCaptures();
+
+            retirerIntrus(intrusCapture);
+        }
+    }
+    // =============================================================
+
+    // Notifier tous les observateurs après un déplacement
+    notifierObservateurs();
+    return true;
+}
 
     // --------------------
     // Observer

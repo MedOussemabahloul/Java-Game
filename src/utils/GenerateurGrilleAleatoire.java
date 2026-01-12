@@ -13,6 +13,7 @@ import model.terrain.TypeCase;
 /**
  * Génère aléatoirement une grille de jeu avec obstacles, sorties, robots, intrus et sacs.
  */
+
 public class GenerateurGrilleAleatoire {
 
     private Random random;
